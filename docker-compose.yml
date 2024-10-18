@@ -1,0 +1,24 @@
+networks:
+  ft-backend-tier:
+    external: true
+  ft-db-tier:
+    external: true
+services:
+  phpapp74:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    volumes:
+      - .:/var/www/html/
+      - ./conf.d/php.ini:/usr/local/etc/php/php.ini
+      - ./conf.d/xdebug.ini:/usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
+    restart: always
+    environment:
+      DB_WRITER_HOST: db
+      DB_WRITER_USER: ft_writer
+      DB_WRITER_PASS: root
+    ports:
+      - 6060:80
+    networks:
+      - ft-backend-tier
+      - ft-db-tier
