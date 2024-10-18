@@ -10,16 +10,9 @@ class Cron extends CI_Controller {
 	}
 
 	public function run_external_script(){
-		echo "Hello Eternal Script <br/>";
 
 
-		$script_path = APPPATH . 'external/test.php';
-
-		$CI = & get_instance();
-		$sql = "SELECT * FROM users LIMIT 10";
-		$data = $CI->db->query($sql)->result();
-
-		print_r($data);die;
+		$script_path = APPPATH . 'external/import_data.php';
         
 		// Check if the file exists
 		if (file_exists($script_path)) {
