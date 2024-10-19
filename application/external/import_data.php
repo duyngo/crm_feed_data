@@ -1,8 +1,31 @@
 <?php
 @set_time_limit(0);
 @ini_set('max_execution_time', 0);
-
 define("BATCH_SIZE", 300);
+// Register an autoloader
+
+spl_autoload_register(function ($class) {
+    // Define the base directory where the classes are located
+    $baseDir = __DIR__ . '/phpseclib-3.0/phpseclib/';
+
+    // Remove 'phpseclib3\' from the beginning of the class name
+    // and replace the namespace separators with directory separators
+    // Add .php at the end
+    $file = $baseDir . str_replace(['phpseclib3\\', '\\'], ['','/'], $class) . '.php';
+
+    // Debugging: Output the generated file path
+   // echo "Looking for class file: $file\n";
+
+    // Check if the file exists and include it
+    if (file_exists($file)) {
+        require_once $file;
+    } else {
+        echo "Class file for {$class} not found!\n";
+    }
+});
+
+use phpseclib3\Net\SFTP;
+
 
 function get_download_save_file($file_url, $output_file_path, $separator = ','){
 
@@ -22,8 +45,8 @@ function get_download_save_file($file_url, $output_file_path, $separator = ','){
     }
 
     if(!file_exists($output_file_path)){
-        //if not existed file return empty
-        return [];
+        //if not existed file
+        die("Not found file: $output_file_path ");
     }
 
     $fileHandle = fopen($output_file_path, 'r');
@@ -252,12 +275,82 @@ function process_synnex_data(){
     echo "Done import SynnexrData.<br/>";
 }
 
+function process_ingram_micro_data(){
+    //connect to SFPT
+    $host = 'mercury.ingrammicro.com';
+    $username = 'au_standard_reports_184417';
+    $password = 'Ingram@1059';
+    $remote_file = '/ddc/download/STDPRICE_FULL.TXT.zip';
+    $local_file =  __DIR__ .'/STDPRICE_FULL.TXT.zip';
+    $unzip_directory = __DIR__ ;
+
+    // Create a new SFTP instance
+    $sftp = new SFTP($host);
+
+    // Connect and login
+    if (!$sftp->login($username, $password)) {
+        exit('Login Failed');
+    }
+
+    // Download the remote file and save it locally
+    if ($sftp->get($remote_file, $local_file)) {
+        // Unzip the downloaded file
+        $zip = new ZipArchive;
+        // Check if the zip file can be opened
+        if ($zip->open($local_file) === TRUE) {
+            // Create the directory if it doesn't exist
+            if (!is_dir($unzip_directory)) {
+                mkdir($unzip_directory, 0755, true);
+            }
+
+            // Extract the zip file to the specified directory
+            $zip->extractTo($unzip_directory);
+            $zip->close();
+            echo "File unzipped successfully to $unzip_directory\n";
+        } else {
+            echo "Failed to open the zip file\n";
+        }
+        echo "File downloaded successfully to $local_file";
+    } else {
+        echo "Failed to download the file";
+    }
+
+    //process import
+    $file_url = '';
+    $output_file_path = __DIR__ .'/STDPRICE_FULL.TXT';
+
+    $data = get_download_save_file($file_url, $output_file_path, "\t");
+
+    //total = 12 columns
+    $map_col_excel2db = [
+        "Ingram Part Number" => "stock_code",
+        "Vendor Name" => "stock_vendor",
+        "Vendor Part Number" => "stock_vendorstockcode",
+        "Ingram Part Description" => "stock_description_short",
+        "Material Long Description" => "stock_description_long",
+        "Product Family" => "stock_cat1",
+        "Retail Price" => "stock_price_rrpex",
+        "Customer Price" => "stock_price_dealerex",
+        "Available Quantity" => "stock_available",
+        "Backlog ETA" => "stock_eta",
+        "Substitute Material" => "stock_alternative",
+        "EANUPC Code" => "stock_barcode"
+    ];
+
+    save_data2DB($data, $map_col_excel2db, 'ING001');
+
+    echo "Done import IngramMicroData.<br/>";
+
+
+}
+
+process_ingram_micro_data();
 
 // process_dicker_data();
 // process_leader_data();
 // process_mmt_data();
 // process_alloys_data();
-process_synnex_data();
+// process_synnex_data();
 
 
 
