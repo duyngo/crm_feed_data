@@ -4,7 +4,7 @@
 
 define("BATCH_SIZE", 300);
 
-function get_download_save_file($file_url, $output_file_path){
+function get_download_save_file($file_url, $output_file_path, $separator = ','){
 
     if($file_url){
         // Use file_get_contents() to read the file from the URL
@@ -29,8 +29,8 @@ function get_download_save_file($file_url, $output_file_path){
     $fileHandle = fopen($output_file_path, 'r');
     if ($fileHandle !== false) {
         $data = [];
-        // Read the CSV file line by line
-        while (($row = fgetcsv($fileHandle)) !== false) {
+        // default Read the CSV file line by line
+        while (($row = fgetcsv($fileHandle, 0, $separator)) !== false) {
             $data[] = $row;
         }
 
@@ -228,23 +228,23 @@ function process_synnex_data(){
     $file_url = '';
     $output_file_path = __DIR__ . "/datafeed_syn.txt"; 
 
-    $data = get_download_save_file($file_url, $output_file_path);
+    $data = get_download_save_file($file_url, $output_file_path, "\t");
 
     //total = 13 columns
     $map_col_excel2db = [
-        'StockCode' => 'stock_code',
-        'Vendor' => 'stock_vendor',
-        'VendorStockCode' => 'stock_vendorstockcode',
-        'StockDescription' => 'stock_description_short',
-        'PrimaryCategory' => 'stock_cat1',
-        'SecondaryCategory' => 'stock_cat2',
-        'TertiaryCategory' => 'stock_cat3',
-        'RRPEx' => 'stock_price_rrpex',
-        'DealerEx' => 'stock_price_dealerex',
-        'StockAvailable' => 'stock_available',
-        'ETA' => 'stock_eta',
-        'Status' => 'stock_status',
-        'Type' => 'stock_type'
+        "SUPPLIER_PART_NUMBER" => "stock_code",
+        "MANUFACTURER_NAME" => "stock_vendor",
+        "MANUFACTURER_PART_NUMBER" => "stock_vendorstockcode",
+        "SHORT_DESCRIPTION" => "stock_description_short",
+        "LONG_DESCRIPTION" => "stock_description_long",
+        "NOTES_COMMENTS" => "stock_desc_brief",
+        "CATEGORY_OF_PRODUCT_1" => "stock_cat1",
+        "CATEGORY_OF_PRODUCT_2" => "stock_cat2",
+        "CATEGORY_OF_PRODUCT_3" => "stock_cat3",
+        "RRP_EX" => "stock_price_rrpex",
+        "RESELLER_BUY_EX" => "stock_price_dealerex",
+        "TOTAL_AVAILABILITY" => "stock_available",
+        "EAN" => "stock_barcode"
     ];
 
     save_data2DB($data, $map_col_excel2db, 'SYN001');
