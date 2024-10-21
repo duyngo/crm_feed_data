@@ -10,7 +10,6 @@ spl_autoload_register(function ($class) {
 
     // Remove 'phpseclib3\' from the beginning of the class name
     // and replace the namespace separators with directory separators
-    // Add .php at the end
     $file = $baseDir . str_replace(['phpseclib3\\', '\\'], ['','/'], $class) . '.php';
 
     // Debugging: Output the generated file path
@@ -20,7 +19,7 @@ spl_autoload_register(function ($class) {
     if (file_exists($file)) {
         require_once $file;
     } else {
-        echo "Class file for {$class} not found!\n";
+        die("Class file for {$class} not found!");
     }
 });
 
@@ -289,7 +288,7 @@ function process_ingram_micro_data(){
 
     // Connect and login
     if (!$sftp->login($username, $password)) {
-        exit('Login Failed');
+        die('Login SFTP Failed');
     }
 
     // Download the remote file and save it locally
@@ -306,13 +305,13 @@ function process_ingram_micro_data(){
             // Extract the zip file to the specified directory
             $zip->extractTo($unzip_directory);
             $zip->close();
-            echo "File unzipped successfully to $unzip_directory\n";
+            echo "File unzipped successfully to $unzip_directory <br/>";
         } else {
-            echo "Failed to open the zip file\n";
+            die("Failed to open the zip file");
         }
-        echo "File downloaded successfully to $local_file";
+        echo "File downloaded successfully to $local_file <br/>";
     } else {
-        echo "Failed to download the file";
+        die("Failed to download the file");
     }
 
     //process import
@@ -344,13 +343,12 @@ function process_ingram_micro_data(){
 
 }
 
+process_dicker_data();
+process_leader_data();
+process_mmt_data();
+process_alloys_data();
+process_synnex_data();
 process_ingram_micro_data();
-
-// process_dicker_data();
-// process_leader_data();
-// process_mmt_data();
-// process_alloys_data();
-// process_synnex_data();
 
 
 
