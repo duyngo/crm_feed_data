@@ -66,61 +66,70 @@ function get_download_save_file($file_url, $output_file_path, $separator = ','){
 
 }
 
-function save_data2DB($data, $map_col_excel2db, $supplier_code){
+function save_data2DB($data, $map_col_excel2db, $supplier_code) {
     $CI = & get_instance();
-    //get first element of data
     $header_excel = array_shift($data);
     $bulk_param_data = array();
-    foreach($data as $index => $row){
-        // Skip empty rows
+    
+    foreach ($data as $index => $row) {
         if (empty(array_filter($row))) {
             continue;
         }
-        $param_data = array('supplier_code'=>$supplier_code);
+
+        $param_data = array('supplier_code' => $supplier_code);
+        
         foreach ($map_col_excel2db as $csvColumn => $dbColumn) {
-            //find divided col
             $number_divided = 0;
-            if(strpos($csvColumn, "::divided") !== false){
+
+            if (strpos($csvColumn, "::divided") !== false) {
                 list($real_column, $divided_part) = explode("::", $csvColumn);
                 $csvColumn = $real_column;
                 list($text_divided, $number_divided) = explode("_", $divided_part);
             }
-            //find concat col
+
             $concat_param_data = array();
-            if(strpos($csvColumn, "CONCAT::") !== false){
+            if (strpos($csvColumn, "CONCAT::") !== false) {
                 list($text_concat, $list_col) = explode("::", $csvColumn);
                 $arr_concat_col = explode("_", $list_col);
-                $concat_param_data = array();
-                foreach($arr_concat_col AS $col_name){
-                    $concatIndex = array_search($col_name, $header_excel); 
-                    $concat_param_data[] = $row[$concatIndex] ?? '';
+
+                foreach ($arr_concat_col as $col_name) {
+                    $concatIndex = array_search($col_name, $header_excel);
+                    if ($concatIndex !== false) {
+                        $concat_param_data[] = $row[$concatIndex] ?? '';
+                    }
                 }
             }
-            // Find the index of the CSV column in the header
-            $csvIndex = array_search($csvColumn, $header_excel); 
-            // Get the corresponding CSV value, fallback to empty string if not found
-            $param_data[$dbColumn] = $row[$csvIndex] ?? '';
 
-            //extra checking update value
-            if($number_divided){
-                $round_result = ROUND((float)$param_data[$dbColumn] / (float)$number_divided, 4);
-                $param_data[$dbColumn] = number_format($round_result,4,'.','');
+            $csvIndex = array_search($csvColumn, $header_excel);
+            if ($csvIndex !== false) {
+                $param_data[$dbColumn] = $row[$csvIndex] ?? '';
+            } else {
+                // Handle the case where the CSV column was not found
+                $param_data[$dbColumn] = ''; // Default to empty or handle as needed
             }
-            if(!empty($concat_param_data)){
+
+            if ($number_divided && isset($param_data[$dbColumn]) && $param_data[$dbColumn]) {
+                $round_result = ROUND((float)$param_data[$dbColumn] / (float)$number_divided, 4);
+                $param_data[$dbColumn] = number_format($round_result, 4, '.', '');
+            }
+
+            if (!empty($concat_param_data)) {
                 $param_data[$dbColumn] = implode("", $concat_param_data);
             }
         }
 
         $bulk_param_data[] = $param_data;
-        if($index % BATCH_SIZE == 0){
+        if ($index % BATCH_SIZE == 0) {
             $CI->db->insert_batch('crm_product_stock', $bulk_param_data);
             $bulk_param_data = array();
         }
     }
-    if(!empty($bulk_param_data)){
+
+    if (!empty($bulk_param_data)) {
         $CI->db->insert_batch('crm_product_stock', $bulk_param_data);
     }
 }
+
 
 function process_dicker_data(){
 
