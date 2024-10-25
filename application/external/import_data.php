@@ -327,7 +327,7 @@ function process_ingram_micro_data(){
     $file_url = '';
     $output_file_path = __DIR__ .'/STDPRICE_FULL.TXT';
 
-    $data = get_download_save_file($file_url, $output_file_path, "\t");
+    $data = get_download_save_file($file_url, $output_file_path);
 
     //total = 12 columns
     $map_col_excel2db = [
