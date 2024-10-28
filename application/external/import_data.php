@@ -357,8 +357,8 @@ process_dicker_data();
 process_leader_data();
 process_mmt_data();
 process_alloys_data();
-process_synnex_data();
 process_ingram_micro_data();
+process_synnex_data();
 
 
 
