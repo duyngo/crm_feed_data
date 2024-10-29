@@ -18,12 +18,6 @@ class Cron extends CI_Controller {
 		if (file_exists($script_path)) {
 				// Require the external script
 				include($script_path);
-
-				// If your external script has a function or output, you can now access it
-				//$result = some_external_function(); // Assuming the script has a function
-
-				// Output the result or handle as needed
-				//echo $result;
 		} else {
 				echo "External script not found!";
 		}
